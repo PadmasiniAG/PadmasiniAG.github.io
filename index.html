@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<head>
+    <title>Zoom WebSDK</title>
+    <meta charset="utf-8" />
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.7.6/css/bootstrap.css"/>
+    <link type="text/css" rel="stylesheet" href="https://source.zoom.us/1.7.6/css/react-select.css"/>
+    <meta name="format-detection" content="telephone=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+<style>
+    body {
+        padding-top: 50px;
+    }
+</style>
+
+<nav id="nav-tool" class="navbar navbar-inverse navbar-fixed-top">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">MyMeetingApp</a>
+        </div>
+        <div id="navbar">
+            <form class="navbar-form navbar-right" id="meeting_form">
+                <div class="form-group">
+                    <input type="text" name="display_name" id="display_name" value="WebSDK1.7.6#CDN" placeholder="Name" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="meeting_number" id="meeting_number" value="" placeholder="Meeting Number" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="meeting_pwd" id="meeting_pwd" value="" placeholder="Meeting Password" class="form-control">
+                </div>
+          
+                <div class="form-group">
+                    <select id="meeting_role" class="selectpicker">
+                        <option value=0>Attendee</option>
+                        <option value=1>Host</option>
+                        <option value=5>Assistant</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="join_meeting">Join</button>
+            </form>
+        </div><!--/.navbar-collapse -->
+    </div>
+</nav>
+
+
+<script src="https://source.zoom.us/1.7.6/lib/vendor/react.min.js"></script>
+<script src="https://source.zoom.us/1.7.6/lib/vendor/react-dom.min.js"></script>
+<script src="https://source.zoom.us/1.7.6/lib/vendor/redux.min.js"></script>
+<script src="https://source.zoom.us/1.7.6/lib/vendor/redux-thunk.min.js"></script>
+<script src="https://source.zoom.us/1.7.6/lib/vendor/jquery.min.js"></script>
+<script src="https://source.zoom.us/1.7.6/lib/vendor/lodash.min.js"></script>
+
+<script src="https://source.zoom.us/zoom-meeting-1.7.6.min.js"></script>
+
+<script type = "text/javascript">
+
+var testTool = {
+    detectOS: function () {
+      var sUserAgent = navigator.userAgent;
+      var isWin = (navigator.platform === 'Win32') || (navigator.platform === 'Windows');
+      var isMac = (navigator.platform === 'Mac68K') || (navigator.platform === 'MacPPC') || (navigator.platform === 'Macintosh') || (navigator.platform === 'MacIntel');
+      if (isMac) return 'Mac';
+      var isUnix = (navigator.platform === 'X11') && !isWin && !isMac;
+      if (isUnix) return 'Unix';
+      var isLinux = (String(navigator.platform).indexOf('Linux') > -1);
+      if (isLinux) return 'Linux';
+      if (isWin) {
+        var isWin2K = sUserAgent.indexOf('Windows NT 5.0') > -1 || sUserAgent.indexOf('Windows 2000') > -1;
+        if (isWin2K) return 'Win2000';
+        var isWinXP = sUserAgent.indexOf('Windows NT 5.1') > -1 || sUserAgent.indexOf('Windows XP') > -1;
+        if (isWinXP) return 'WinXP';
+        var isWin2003 = sUserAgent.indexOf('Windows NT 5.2') > -1 || sUserAgent.indexOf('Windows 2003') > -1;
+        if (isWin2003) return 'Win2003';
+        var isWinVista = sUserAgent.indexOf('Windows NT 6.0') > -1 || sUserAgent.indexOf('Windows Vista') > -1;
+        if (isWinVista) return 'WinVista';
+        var isWin7 = sUserAgent.indexOf('Windows NT 6.1') > -1 || sUserAgent.indexOf('Windows 7') > -1;
+        if (isWin7) return 'Win7';
+        var isWin10 = sUserAgent.indexOf('Windows NT 10') > -1 || sUserAgent.indexOf('Windows 10') > -1;
+        if (isWin10) return 'Win10';
+      }
+      return 'other';
+    },
+    detectIE: function () {
+      var ua = window.navigator.userAgent;
+  
+      // Test values; Uncomment to check result …
+  
+      // IE 10
+      // ua = 'Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Trident/6.0)';
+  
+      // IE 11
+      // ua = 'Mozilla/5.0 (Windows NT 6.3; Trident/7.0; rv:11.0) like Gecko';
+  
+      // Edge 12 (Spartan)
+      // ua = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.71 Safari/537.36 Edge/12.0';
+  
+      // Edge 13
+      // ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/46.0.2486.0 Safari/537.36 Edge/13.10586';
+  
+      var msie = ua.indexOf('MSIE ');
+      if (msie > 0) {
+        // IE 10 or older => return version number
+        return 'IE' + parseInt(ua.substring(msie + 5, ua.indexOf('.', msie)), 10);
+      }
+  
+      var trident = ua.indexOf('Trident/');
+      if (trident > 0) {
+        // IE 11 => return version number
+        var rv = ua.indexOf('rv:');
+        return 'IE' + parseInt(ua.substring(rv + 3, ua.indexOf('.', rv)), 10);
+      }
+  
+      var edge = ua.indexOf('Edge/');
+      if (edge > 0) {
+        // Edge (IE 12+) => return version number
+        return 'Edge' + parseInt(ua.substring(edge + 5, ua.indexOf('.', edge)), 10);
+      }
+  
+      // other browser
+      return false;
+    },
+    getBrowserInfo: function () {
+      var agent = navigator.userAgent.toLowerCase();
+      var regStr_ff = /firefox\/[\d.]+/gi;
+      var regStr_chrome = /chrome\/[\d.]+/gi;
+      var regStrChrome2 = /ipad; cpu os (\d+_\d+)/gi;
+      var regStr_saf = /safari\/[\d.]+/gi;
+      var regStr_edg = /edg\/[\d.]+/gi;
+  
+      // firefox
+      if (agent.indexOf('firefox') > 0) {
+        return agent.match(regStr_ff);
+      }
+  
+      // Safari
+      if (agent.indexOf('safari') > 0 && agent.indexOf('chrome') < 0) {
+        var tmpInfo;
+        if (agent.indexOf('ipad') > 0) {
+          tmpInfo = agent.match(regStrChrome2).toString().replace('ipad; cpu os ', 'ipados/');
+        } else {
+          tmpInfo = agent.match(regStr_saf);
+          tmpInfo = tmpInfo.toString().replace('version', 'safari');
+        }
+        return tmpInfo;
+      }
+  
+      // IE / Eege
+      var tmpIsIE = testTool.detectIE();
+      if (tmpIsIE) {
+        return tmpIsIE;
+      }
+      // Chrome
+      if (agent.indexOf('chrome') > 0) {
+        return agent.match(regStr_chrome);
+      }
+  
+      return 'other';
+    },
+    getRandomInt: function (max) {
+      return Math.floor(Math.random() * Math.floor(max));
+    },
+}
+
+window.testTool = testTool;
+
+</script>
+
+<script type = "text/javascript">
+
+(function(){
+
+	console.log('checkSystemRequirements');
+	console.log(JSON.stringify(ZoomMtg.checkSystemRequirements()));
+	//ZoomMtg.setZoomJSLib('E:\web\Zoom\websdk-master\dist\lib', '/av');
+	//ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.6/lib', '/av');
+	
+    // it's option if you want to change the WebSDK dependency link resources. setZoomJSLib must be run at first
+    // if (!china) ZoomMtg.setZoomJSLib('https://source.zoom.us/1.7.6/lib', '/av'); // CDN version default
+    // else ZoomMtg.setZoomJSLib('https://jssdk.zoomus.cn/1.7.6/lib', '/av'); // china cdn option 
+    // ZoomMtg.setZoomJSLib('http://localhost:9999/node_modules/@zoomus/websdk/dist/lib', '/av'); // Local version default, Angular Project change to use cdn version
+    ZoomMtg.preLoadWasm();
+    ZoomMtg.prepareJssdk();
+    
+    //var API_KEY = 'YOUR_API_KEY';
+	//var API_KEY = "5BHSAdbQSK-TEEXJuzhKxA"; //18.reshu
+	var API_KEY = "Ad-gEfo9QgWLXs6jdBxXNA";
+
+    /**
+     * NEVER PUT YOUR ACTUAL API SECRET IN CLIENT SIDE CODE, THIS IS JUST FOR QUICK PROTOTYPING
+     * The below generateSignature should be done server side as not to expose your api secret in public
+     * You can find an eaxmple in here: https://marketplace.zoom.us/docs/sdk/native-sdks/web/essential/signature
+     */
+    //var API_SECRET = "k7e3mSE2ec1x38cutA5hGaLN6LmKX9IMAX3z"; //18.reshu
+	var API_SECRET = "4Uywgj9pUtcDBZtci2frfU3V3ueWsDc7K9UC";
+
+    testTool = window.testTool;
+    document.getElementById('display_name').value = "CDN" + ZoomMtg.getJSSDKVersion()[0] + testTool.detectOS() + "#" + testTool.getBrowserInfo();
+
+    document.getElementById('join_meeting').addEventListener('click', function(e){
+        e.preventDefault();
+
+        if(!this.form.checkValidity()){
+            alert("Enter Name and Meeting Number");
+            return false;
+        }
+
+        
+        var meetConfig = {
+            apiKey: API_KEY,
+            apiSecret: API_SECRET,
+            meetingNumber: parseInt(document.getElementById('meeting_number').value),
+            userName: document.getElementById('display_name').value,
+            passWord: document.getElementById('meeting_pwd').value,
+            leaveUrl: "https://zoom.us",
+            role: parseInt(document.getElementById('meeting_role').value, 10)
+        };
+
+
+        var signature = ZoomMtg.generateSignature({
+            meetingNumber: meetConfig.meetingNumber,
+            apiKey: meetConfig.apiKey,
+            apiSecret: meetConfig.apiSecret,
+            role: meetConfig.role,
+            success: function(res){
+                console.log(res.result);
+            }
+        });
+
+        ZoomMtg.init({
+            leaveUrl: 'https://www.zoom.us',
+            isSupportAV: true,
+            success: function () {
+                ZoomMtg.join(
+                    {
+                        meetingNumber: meetConfig.meetingNumber,
+                        userName: meetConfig.userName,
+                        signature: signature,
+                        apiKey: meetConfig.apiKey,
+						userEmail: 'karthikjayakaran@gmail.com',
+                        passWord: meetConfig.passWord,
+                        success: function(res){
+                            $('#nav-tool').hide();
+                            console.log('join meeting success');
+                        },
+                        error: function(res) {
+                            console.log(res);
+                        }
+                    }
+                );
+            },
+            error: function(res) {
+                console.log(res);
+            }
+        });
+
+    });
+
+})();
+
+
+</script>
+allow="camera;microphone"
+<script>
+   
+</script>
+</body>
+</html>
